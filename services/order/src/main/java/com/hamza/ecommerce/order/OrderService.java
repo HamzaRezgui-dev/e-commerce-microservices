@@ -2,6 +2,8 @@ package com.hamza.ecommerce.order;
 
 import com.hamza.ecommerce.customer.CustomerClient;
 import com.hamza.ecommerce.exception.BusinessException;
+import com.hamza.ecommerce.kafka.OrderConfirmation;
+import com.hamza.ecommerce.kafka.OrderProducer;
 import com.hamza.ecommerce.orderline.OrderLineRequest;
 import com.hamza.ecommerce.orderline.OrderLineService;
 import com.hamza.ecommerce.product.ProductClient;
@@ -9,6 +11,8 @@ import com.hamza.ecommerce.product.PurchaseRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -18,11 +22,12 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderMapper mapper;
     private final OrderLineService orderLineService;
+    private final OrderProducer orderProducer;
     public Integer createOrder(@Valid OrderRequest request) {
         var customer = customerClient.findCustomerById(request.customerId())
                 .orElseThrow(() -> new BusinessException("Cannot create order:: No Customer exists with the provided ID"));
 
-        productClient.purchaseProducts(request.products());
+        var purchasedProducts = productClient.purchaseProducts(request.products());
 
         var order = orderRepository.save(mapper.toOrder(request));
 
@@ -36,6 +41,30 @@ public class OrderService {
                     )
             );
         }
-        return null;
+
+        orderProducer.sendOrderConfirmation(
+                new OrderConfirmation(
+                        order.getReference(),
+                        order.getTotalAmount(),
+                        order.getPaymentMethod(),
+                        customer,
+                        purchasedProducts
+
+                )
+        );
+
+        return order.getId();
+    }
+
+    public List<OrderResponse> findAll() {
+        return orderRepository.findAll().stream()
+                .map(mapper::toOrderResponse)
+                .toList();
+    }
+
+    public OrderResponse findById(Integer orderId) {
+        return orderRepository.findById(orderId)
+                .map(mapper::toOrderResponse)
+                .orElseThrow(() -> new BusinessException("No order found with the provided ID"));
     }
 }
