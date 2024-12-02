@@ -6,7 +6,7 @@ import org.springframework.validation.annotation.Validated;
 
 @Validated
 public record Customer(
-        Integer id,
+        String  id,
         @NotNull(message = "First name is required")
         String firstname,
         @NotNull(message = "Last name is required")

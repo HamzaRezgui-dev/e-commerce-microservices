@@ -9,14 +9,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/api/v1/payments")
+@RequiredArgsConstructor
 public class PaymentController {
 
-    private final PaymentService paymentService;
+    private final PaymentService service;
 
-    @PostMapping("/")
-    public ResponseEntity<Integer> createPayment(@RequestBody @Valid PaymentRequest payment) {
-        return ResponseEntity.ok(paymentService.createPayment(payment));
+    @PostMapping
+    public ResponseEntity<Integer> createPayment(
+            @RequestBody @Valid PaymentRequest request
+    ) {
+        return ResponseEntity.ok(this.service.createPayment(request));
     }
 }
