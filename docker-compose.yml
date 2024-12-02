@@ -104,8 +104,8 @@ services:
     networks:
       - microservices-net
 
-  keycloack:
-    container_name: keycloack-ms
+  keycloak:
+    container_name: keycloak-ms
     image: quay.io/keycloak/keycloak:24.0.2
     ports:
       - "9098:8080"
